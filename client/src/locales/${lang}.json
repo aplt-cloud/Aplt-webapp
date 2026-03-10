@@ -1,0 +1,15 @@
+{
+  "welcome": "Welcome",
+  "login": "Login",
+  "signup": "Sign Up",
+  "forgot_password": "Forgot Password",
+  "email": "Email",
+  "password": "Password",
+  "setup_profile": "Set up Profile",
+  "home": "Home",
+  "profile": "Profile",
+  "chat": "Chat",
+  "send": "Send",
+  "logout": "Logout",
+  "error_occurred": "An error has occurred"
+}
