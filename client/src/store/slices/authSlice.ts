@@ -10,7 +10,7 @@ interface AuthState {
 const initialState: AuthState = {
   currentUser: null,
   isAuthenticated: false,
-  loading: false,
+  loading: true, // Start as true
   error: null,
 };
 
@@ -33,6 +33,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.currentUser = null;
       state.isAuthenticated = false;
+      state.loading = false;
     }
   },
 });
