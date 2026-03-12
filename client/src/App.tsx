@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { supabase } from './lib/supabase';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setUser, setLoading } from './store/slices/authSlice';
-import { AnimatePresence } from 'framer-motion';
 
 // Import actual screens
 import WelcomeScreen from './pages/WelcomeScreen';
@@ -34,26 +33,33 @@ function App() {
 
   useEffect(() => {
     const fetchProfile = async (userId: string) => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (!error && data) {
-        dispatch(setUser(data));
-
-        // Update last_active
-        await supabase
+      try {
+        const { data, error } = await supabase
           .from('users')
-          .update({ last_active: new Date().toISOString() })
-          .eq('user_id', userId);
-      } else {
-        // If profile doesn't exist yet, we still have the auth user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          dispatch(setUser({ user_id: user.id, email: user.email, profile_complete: false }));
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (!error && data) {
+          dispatch(setUser(data));
+
+          // Update last_active
+          await supabase
+            .from('users')
+            .update({ last_active: new Date().toISOString() })
+            .eq('user_id', userId);
+        } else {
+          // If profile doesn't exist yet, we still have the auth user
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            dispatch(setUser({ user_id: user.id, email: user.email, profile_complete: false }));
+          } else {
+            dispatch(setLoading(false));
+          }
         }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        dispatch(setLoading(false));
       }
     };
 
@@ -64,6 +70,8 @@ function App() {
       } else {
         dispatch(setLoading(false));
       }
+    }).catch(() => {
+      dispatch(setLoading(false));
     });
 
     // Listen for auth changes
@@ -84,40 +92,38 @@ function App() {
 
   return (
     <Router>
-      <AnimatePresence mode="wait">
-        <Routes>
-          <Route path="/" element={<WelcomeScreen />} />
-          <Route path="/login" element={<LoginScreen />} />
-          <Route path="/signup" element={<SignupScreen />} />
-          <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+      <Routes>
+        <Route path="/" element={<WelcomeScreen />} />
+        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/signup" element={<SignupScreen />} />
+        <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
 
-          <Route path="/setup" element={
-            <ProtectedRoute>
-              <ProfileSetupScreen />
-            </ProtectedRoute>
-          } />
+        <Route path="/setup" element={
+          <ProtectedRoute>
+            <ProfileSetupScreen />
+          </ProtectedRoute>
+        } />
 
-          <Route path="/home" element={
-            <ProtectedRoute requireProfileComplete={true}>
-              <MainTabs />
-            </ProtectedRoute>
-          } />
+        <Route path="/home" element={
+          <ProtectedRoute requireProfileComplete={true}>
+            <MainTabs />
+          </ProtectedRoute>
+        } />
 
-          <Route path="/profile/:username" element={
-            <ProtectedRoute>
-              <UserProfileScreen />
-            </ProtectedRoute>
-          } />
+        <Route path="/profile/:username" element={
+          <ProtectedRoute>
+            <UserProfileScreen />
+          </ProtectedRoute>
+        } />
 
-          <Route path="/chat/:conversationId" element={
-            <ProtectedRoute>
-              <ChatScreen />
-            </ProtectedRoute>
-          } />
+        <Route path="/chat/:conversationId" element={
+          <ProtectedRoute>
+            <ChatScreen />
+          </ProtectedRoute>
+        } />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AnimatePresence>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Router>
   );
 }
