@@ -76,7 +76,7 @@ const SignupScreen: React.FC = () => {
       if (message.includes('already exists')) {
         setErrors({ general: 'An account with this email already exists. Try logging in.' });
       } else {
-        setErrors({ general: 'Something went wrong. Please check your connection and try again.' });
+        setErrors({ general: message }); // Show specific error message
       }
     } finally {
       setLoading(false);
