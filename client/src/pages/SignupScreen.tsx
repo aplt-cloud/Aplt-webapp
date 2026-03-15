@@ -22,7 +22,7 @@ const SignupScreen: React.FC = () => {
 
   useEffect(() => {
     if (email && !validateEmail(email)) {
-      setErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+      setErrors(prev => ({ ...prev, email: t('invalid_email') || 'Please enter a valid email address' }));
     } else {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -30,21 +30,21 @@ const SignupScreen: React.FC = () => {
         return newErrors;
       });
     }
-  }, [email]);
+  }, [email, t]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (!validateEmail(email)) newErrors.email = 'Please enter a valid email address';
-    if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!validateEmail(email)) newErrors.email = t('invalid_email') || 'Please enter a valid email address';
+    if (password.length < 8) newErrors.password = t('password_too_short') || 'Password must be at least 8 characters';
+    if (password !== confirmPassword) newErrors.confirmPassword = t('passwords_dont_match') || 'Passwords do not match';
 
     const age = calculateAge(dob);
     if (!dob) {
-      newErrors.dob = 'Date of birth is required';
+      newErrors.dob = t('dob_required') || 'Date of birth is required';
     } else if (age < 13) {
-      newErrors.dob = 'You must be at least 13 years old to use aplt';
+      newErrors.dob = t('under_13') || 'You must be at least 13 years old to use aplt';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -61,7 +61,7 @@ const SignupScreen: React.FC = () => {
       if (data.user) {
         const ageTier = getAgeTier(age);
         const { error: profileError } = await supabase.from('users').insert({
-          user_id: data.user.id,
+          user_id: data.user.id, // Fixed: using user_id instead of id
           email,
           date_of_birth: dob,
           age_tier: ageTier,
@@ -74,9 +74,9 @@ const SignupScreen: React.FC = () => {
     } catch (err: any) {
       const message = handleAuthError(err, 'Sign Up');
       if (message.includes('already exists')) {
-        setErrors({ general: 'An account with this email already exists. Try logging in.' });
+        setErrors({ general: t('email_already_exists') || 'An account with this email already exists. Try logging in.' });
       } else {
-        setErrors({ general: message }); // Show specific error message
+        setErrors({ general: message }); // Show real error message
       }
     } finally {
       setLoading(false);
