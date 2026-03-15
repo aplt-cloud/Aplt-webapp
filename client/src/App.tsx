@@ -63,31 +63,47 @@ function App() {
       }
     };
 
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
+    // Use a try-catch for the initial session check
+    const initSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          dispatch(setLoading(false));
+        }
+      } catch (err) {
+        console.error('Session initialization error:', err);
         dispatch(setLoading(false));
       }
-    }).catch(() => {
-      dispatch(setLoading(false));
-    });
+    };
+
+    initSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        dispatch(setUser(null));
-      }
+      try {
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        } else {
+          dispatch(setUser(null));
+        }
 
-      if (event === 'SIGNED_OUT') {
-        dispatch(setUser(null));
+        if (event === 'SIGNED_OUT') {
+          dispatch(setUser(null));
+        }
+      } catch (err) {
+        console.error('Auth state change error:', err);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, [dispatch]);
 
   return (
