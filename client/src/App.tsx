@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setUser, setLoading } from './store/slices/authSlice';
@@ -29,10 +29,17 @@ const ProtectedRoute = ({ children, requireProfileComplete = false }: { children
   return <>{children}</>;
 };
 
-function App() {
+const AuthHandler = () => {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    // Check for password reset token in URL hash
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token') && hash.includes('type=recovery')) {
+      navigate('/reset-password', { replace: true });
+    }
+
     const fetchProfile = async (userId: string) => {
       try {
         const { data, error } = await supabase
@@ -86,6 +93,11 @@ function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       try {
+        if (event === 'PASSWORD_RECOVERY') {
+          navigate('/reset-password', { replace: true });
+          return;
+        }
+
         if (session?.user) {
           fetchProfile(session.user.id);
         } else {
@@ -105,10 +117,15 @@ function App() {
         subscription.unsubscribe();
       }
     };
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
+  return null;
+};
+
+function App() {
   return (
     <Router>
+      <AuthHandler />
       <Routes>
         <Route path="/" element={<WelcomeScreen />} />
         <Route path="/login" element={<LoginScreen />} />
