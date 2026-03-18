@@ -9,6 +9,7 @@ import WelcomeScreen from './pages/WelcomeScreen';
 import LoginScreen from './pages/LoginScreen';
 import SignupScreen from './pages/SignupScreen';
 import ForgotPasswordScreen from './pages/ForgotPasswordScreen';
+import ResetPasswordScreen from './pages/ResetPasswordScreen';
 import ProfileSetupScreen from './pages/ProfileSetupScreen';
 import MainTabs from './pages/MainTabs';
 import UserProfileScreen from './pages/UserProfileScreen';
@@ -113,6 +114,7 @@ function App() {
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/signup" element={<SignupScreen />} />
         <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+        <Route path="/reset-password" element={<ResetPasswordScreen />} />
 
         <Route path="/setup" element={
           <ProtectedRoute>

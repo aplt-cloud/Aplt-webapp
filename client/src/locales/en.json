@@ -35,5 +35,8 @@
   "passwords_dont_match": "Passwords do not match",
   "dob_required": "Date of birth is required",
   "under_13": "You must be at least 13 years old to use aplt",
-  "email_already_exists": "An account with this email already exists. Try logging in."
+  "email_already_exists": "An account with this email already exists. Try logging in.",
+  "new_password": "New Password",
+  "enter_new_password": "Enter a new password for your account",
+  "save_password": "Save Password"
 }
