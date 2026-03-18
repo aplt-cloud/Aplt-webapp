@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,22 @@ const ResetPasswordScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    // Detect access token from URL hash and authenticate session
+    const handleToken = async () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        // Supabase auto-handles tokens in the hash if we use getSession or onAuthStateChange
+        // but we can also explicitly set it if needed.
+        const { error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Failed to parse session from hash:', error);
+        }
+      }
+    };
+    handleToken();
+  }, []);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +52,9 @@ const ResetPasswordScreen: React.FC = () => {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
 
-      // Redirect to login after success
-      navigate('/login');
+      // Success: redirect to login
+      alert(t('password_updated')); // Placeholder for toast
+      navigate('/login', { replace: true });
     } catch (err: any) {
       const message = handleAuthError(err, 'Reset Password');
       setErrors({ general: message });
@@ -54,14 +71,18 @@ const ResetPasswordScreen: React.FC = () => {
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className="flex flex-col min-h-screen bg-[#0A0A0A] px-6 py-12"
     >
-      <h1 className="text-[32px] font-bold text-white mb-2">{t('new_password')}</h1>
+      <button onClick={() => navigate(-1)} className="text-white self-start mb-8 flex items-center">
+        <span className="mr-2 text-xl">←</span> {t('back')}
+      </button>
+
+      <h1 className="text-[24px] font-bold text-white mb-2">{t('set_new_password')}</h1>
       <p className="text-[#8E8E93] mb-8">
         {t('enter_new_password')}
       </p>
 
       <form onSubmit={handleReset} className="flex-1">
         <Input
-          label={t('password')}
+          label={t('new_password')}
           type="password"
           placeholder="Min 8 characters"
           value={password}
@@ -71,7 +92,7 @@ const ResetPasswordScreen: React.FC = () => {
           disabled={loading}
         />
         <Input
-          label={t('confirm_password')}
+          label={t('reenter_password')}
           type="password"
           placeholder="Repeat new password"
           value={confirmPassword}
