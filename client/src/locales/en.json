@@ -63,5 +63,6 @@
   "upload_file": "Upload File",
   "done": "Done",
   "retry": "Retry",
-  "upload_failed": "Upload failed. Please try again."
+  "upload_failed": "Upload failed. Please try again.",
+  "cancel": "Cancel"
 }
