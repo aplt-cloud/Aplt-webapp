@@ -155,3 +155,30 @@ CREATE POLICY "Twin owners see their feedback" ON feedback FOR SELECT USING (
 
 -- Bug reports
 CREATE POLICY "Users create bug reports" ON bug_reports FOR INSERT WITH CHECK (auth.uid() = reporter_id);
+
+-- --- STORAGE ---
+-- Create profile-photos bucket
+INSERT INTO storage.buckets (id, name, public) VALUES ('profile-photos', 'profile-photos', true) ON CONFLICT (id) DO NOTHING;
+
+-- Storage Policies
+-- Allow public access to profile photos
+CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'profile-photos');
+
+-- Allow authenticated users to upload their own photos
+CREATE POLICY "Allow User Uploads" ON storage.objects FOR INSERT WITH CHECK (
+  bucket_id = 'profile-photos' AND
+  auth.role() = 'authenticated' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Allow users to update their own photos
+CREATE POLICY "Allow User Updates" ON storage.objects FOR UPDATE USING (
+  bucket_id = 'profile-photos' AND
+  auth.uid()::text = (storage.foldername(name))[1]
+);
+
+-- Allow users to delete their own photos
+CREATE POLICY "Allow User Deletes" ON storage.objects FOR DELETE USING (
+  bucket_id = 'profile-photos' AND
+  auth.uid()::text = (storage.foldername(name))[1]
+);
