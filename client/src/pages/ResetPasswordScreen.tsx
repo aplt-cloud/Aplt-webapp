@@ -16,19 +16,29 @@ const ResetPasswordScreen: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    // Detect access token from URL hash and authenticate session
-    const handleToken = async () => {
+    const handleRecoverySession = async () => {
+      // Supabase access token is in the hash fragment: #access_token=...&refresh_token=...
       const hash = window.location.hash;
       if (hash && hash.includes('access_token')) {
-        // Supabase auto-handles tokens in the hash if we use getSession or onAuthStateChange
-        // but we can also explicitly set it if needed.
-        const { error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Failed to parse session from hash:', error);
+        const params = new URLSearchParams(hash.replace('#', '?'));
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (error) {
+            console.error('Error setting recovery session:', error.message);
+            setErrors({ general: error.message });
+          }
         }
       }
     };
-    handleToken();
+
+    handleRecoverySession();
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {
@@ -53,7 +63,7 @@ const ResetPasswordScreen: React.FC = () => {
       if (error) throw error;
 
       // Success: redirect to login
-      alert(t('password_updated')); // Placeholder for toast
+      alert(t('password_updated'));
       navigate('/login', { replace: true });
     } catch (err: any) {
       const message = handleAuthError(err, 'Reset Password');
