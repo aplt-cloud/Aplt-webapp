@@ -35,10 +35,17 @@ const AuthHandler = () => {
 
   useEffect(() => {
     // Check for password reset token in URL hash
-    const hash = window.location.hash;
-    if (hash && hash.includes('access_token') && hash.includes('type=recovery')) {
-      navigate('/reset-password', { replace: true });
-    }
+    const checkRecoveryHash = () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token') && (hash.includes('type=recovery') || hash.includes('type=signup'))) {
+        // Redirection should happen, but we let the component handle setSession
+        navigate('/reset-password', { replace: true });
+        return true;
+      }
+      return false;
+    };
+
+    const isRecovery = checkRecoveryHash();
 
     const fetchProfile = async (userId: string) => {
       try {
@@ -79,12 +86,12 @@ const AuthHandler = () => {
 
         if (session?.user) {
           await fetchProfile(session.user.id);
-        } else {
+        } else if (!isRecovery) {
           dispatch(setLoading(false));
         }
       } catch (err) {
         console.error('Session initialization error:', err);
-        dispatch(setLoading(false));
+        if (!isRecovery) dispatch(setLoading(false));
       }
     };
 
