@@ -15,26 +15,45 @@ const ResetPasswordScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [linkInvalid, setLinkInvalid] = useState(false);
 
   useEffect(() => {
     const handleRecoverySession = async () => {
       // Supabase access token is in the hash fragment: #access_token=...&refresh_token=...
       const hash = window.location.hash;
-      if (hash && hash.includes('access_token')) {
-        const params = new URLSearchParams(hash.replace('#', '?'));
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
+
+      if (hash) {
+        // More robust hash parsing
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
 
         if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
+          try {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
 
-          if (error) {
-            console.error('Error setting recovery session:', error.message);
-            setErrors({ general: error.message });
+            if (error) {
+              console.error('Error setting recovery session:', error.message);
+              setLinkInvalid(true);
+            }
+          } catch (err) {
+            setLinkInvalid(true);
           }
+        } else {
+          // If already authenticated via recovery (session might have been set by AuthHandler)
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+             setLinkInvalid(true);
+          }
+        }
+      } else {
+        // No hash, check if session already exists (redirected from AuthHandler)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setLinkInvalid(true);
         }
       }
       setSessionLoading(false);
@@ -78,7 +97,21 @@ const ResetPasswordScreen: React.FC = () => {
   if (sessionLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white">
-        {t('loading') || 'Loading...'}
+        <div className="w-8 h-8 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (linkInvalid) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0A0A0A] px-6 py-12 items-center justify-center text-center">
+        <h1 className="text-[24px] font-bold text-white mb-4">{t('invalid_link') || 'Invalid or Expired Link'}</h1>
+        <p className="text-[#8E8E93] mb-8">
+          {t('invalid_link_sub') || 'The password reset link is invalid or has expired. Please request a new one.'}
+        </p>
+        <Button onClick={() => navigate('/forgot-password')}>
+          {t('back_to_reset') || 'Back to Reset'}
+        </Button>
       </div>
     );
   }
@@ -91,7 +124,7 @@ const ResetPasswordScreen: React.FC = () => {
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className="flex flex-col min-h-screen bg-[#0A0A0A] px-6 py-12"
     >
-      <button onClick={() => navigate(-1)} className="text-white self-start mb-8 flex items-center">
+      <button onClick={() => navigate('/login')} className="text-white self-start mb-8 flex items-center">
         <span className="mr-2 text-xl">←</span> {t('back')}
       </button>
 

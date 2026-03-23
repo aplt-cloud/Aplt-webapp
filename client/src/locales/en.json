@@ -64,5 +64,8 @@
   "done": "Done",
   "retry": "Retry",
   "upload_failed": "Upload failed. Please try again.",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "invalid_link": "Invalid or Expired Link",
+  "invalid_link_sub": "The password reset link is invalid or has expired. Please request a new one.",
+  "back_to_reset": "Back to Reset"
 }
