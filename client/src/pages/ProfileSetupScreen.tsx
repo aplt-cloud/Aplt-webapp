@@ -232,7 +232,7 @@ const StepUsername = ({ data, onUpdate }: any) => {
 
   useEffect(() => {
     onUpdate({ username }, false); // Update state without persisting to DB yet
-  }, [username]);
+  }, [username, onUpdate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -265,7 +265,7 @@ const StepDisplayName = ({ data, onUpdate }: any) => {
 
   useEffect(() => {
     onUpdate({ display_name: displayName }, false);
-  }, [displayName]);
+  }, [displayName, onUpdate]);
 
   return (
     <div>
@@ -290,7 +290,7 @@ const StepBio = ({ data, onUpdate, onSkip }: any) => {
 
   useEffect(() => {
     onUpdate({ bio }, false);
-  }, [bio]);
+  }, [bio, onUpdate]);
 
   return (
     <div>
@@ -327,21 +327,14 @@ const ProfileSetupScreen: React.FC = () => {
     const loadUserData = async () => {
       if (!currentUser) return;
       try {
-        const { data, error } = await supabase.from('users').select('*').eq('user_id', currentUser.user_id).single();
+        const { data } = await supabase.from('users').select('*').eq('user_id', currentUser.user_id).single();
         if (data) setFormData(data);
       } catch (err) { console.error(err); } finally { setLoading(false); }
     };
     loadUserData();
   }, [currentUser]);
 
-  const updateFormData = (updates: any, persist = true) => {
-    setFormData((prev: any) => ({ ...prev, ...updates }));
-    if (persist) {
-      persistToSupabase(updates);
-    }
-  };
-
-  const persistToSupabase = async (updates: any) => {
+  const persistToSupabase = useCallback(async (updates: any) => {
     setIsSaving(true);
     try {
       const { error } = await supabase.from('users').update(updates).eq('user_id', currentUser.user_id);
@@ -353,7 +346,14 @@ const ProfileSetupScreen: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [currentUser, dispatch, step]);
+
+  const updateFormData = useCallback((updates: any, persist = true) => {
+    setFormData((prev: any) => ({ ...prev, ...updates }));
+    if (persist) {
+      persistToSupabase(updates);
+    }
+  }, [persistToSupabase]);
 
   const nextStep = async () => {
     // For steps that don't auto-persist on change, persist now
