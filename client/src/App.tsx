@@ -34,18 +34,7 @@ const AuthHandler = () => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    // Check for password reset token in URL hash
-    const checkRecoveryHash = () => {
-      const hash = window.location.hash;
-      if (hash && hash.includes('access_token') && (hash.includes('type=recovery') || hash.includes('type=signup'))) {
-        // Redirection should happen, but we let the component handle setSession
-        navigate('/reset-password', { replace: true });
-        return true;
-      }
-      return false;
-    };
-
-    const isRecovery = checkRecoveryHash();
+    let isRecovery = false;
 
     const fetchProfile = async (userId: string) => {
       try {
@@ -80,18 +69,43 @@ const AuthHandler = () => {
 
     // Use a try-catch for the initial session check
     const initSession = async () => {
+      // Check for password reset token in URL hash FIRST
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+
+        if (accessToken && refreshToken && (type === 'recovery' || type === 'signup')) {
+          try {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (!error) {
+              isRecovery = true;
+              navigate('/reset-password', { replace: true });
+              return;
+            }
+          } catch (err) {
+            console.error('Error setting session from hash:', err);
+          }
+        }
+      }
+
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
 
         if (session?.user) {
           await fetchProfile(session.user.id);
-        } else if (!isRecovery) {
+        } else {
           dispatch(setLoading(false));
         }
       } catch (err) {
         console.error('Session initialization error:', err);
-        if (!isRecovery) dispatch(setLoading(false));
+        dispatch(setLoading(false));
       }
     };
 

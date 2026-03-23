@@ -18,48 +18,15 @@ const ResetPasswordScreen: React.FC = () => {
   const [linkInvalid, setLinkInvalid] = useState(false);
 
   useEffect(() => {
-    const handleRecoverySession = async () => {
-      // Supabase access token is in the hash fragment: #access_token=...&refresh_token=...
-      const hash = window.location.hash;
-
-      if (hash) {
-        // More robust hash parsing
-        const hashParams = new URLSearchParams(hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-
-        if (accessToken && refreshToken) {
-          try {
-            const { error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-
-            if (error) {
-              console.error('Error setting recovery session:', error.message);
-              setLinkInvalid(true);
-            }
-          } catch (err) {
-            setLinkInvalid(true);
-          }
-        } else {
-          // If already authenticated via recovery (session might have been set by AuthHandler)
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
-             setLinkInvalid(true);
-          }
-        }
-      } else {
-        // No hash, check if session already exists (redirected from AuthHandler)
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          setLinkInvalid(true);
-        }
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setLinkInvalid(true);
       }
       setSessionLoading(false);
     };
 
-    handleRecoverySession();
+    checkSession();
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {
