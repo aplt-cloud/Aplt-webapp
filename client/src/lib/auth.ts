@@ -1,4 +1,3 @@
-import { supabase } from './supabase';
 import * as Sentry from "@sentry/react";
 
 export const handleAuthError = (error: any, context: string) => {
