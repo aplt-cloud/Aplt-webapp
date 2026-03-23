@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ const ResetPasswordScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -36,6 +37,7 @@ const ResetPasswordScreen: React.FC = () => {
           }
         }
       }
+      setSessionLoading(false);
     };
 
     handleRecoverySession();
@@ -72,6 +74,14 @@ const ResetPasswordScreen: React.FC = () => {
       setLoading(false);
     }
   };
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white">
+        {t('loading') || 'Loading...'}
+      </div>
+    );
+  }
 
   return (
     <motion.div
