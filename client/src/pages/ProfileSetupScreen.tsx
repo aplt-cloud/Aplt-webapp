@@ -325,6 +325,7 @@ const ProfileSetupScreen: React.FC = () => {
   const [formData, setFormData] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -371,8 +372,6 @@ const ProfileSetupScreen: React.FC = () => {
   const prevStep = () => { if (step > 1) setStep(step - 1); else navigate(-1); };
 
   if (loading) return <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white text-sm">Loading...</div>;
-
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
 
   const isNextDisabled = () => {
     if (step === 1) return !formData.profile_photo_url;

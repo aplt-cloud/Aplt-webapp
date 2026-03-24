@@ -9,4 +9,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase credentials missing.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    detectSessionInUrl: true,
+    flowType: 'implicit',
+  },
+});
