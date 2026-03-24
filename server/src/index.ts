@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
+import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -57,6 +58,9 @@ app.get('/', (req, res) => {
 
 // The Sentry error handler must be registered before any other error middleware and after all controllers
 Sentry.setupExpressErrorHandler(app);
+
+// Global Error Handler
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {

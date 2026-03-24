@@ -34,8 +34,6 @@ const AuthHandler = () => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    let isRecovery = false;
-
     const fetchProfile = async (userId: string) => {
       try {
         const { data, error } = await supabase
@@ -84,7 +82,6 @@ const AuthHandler = () => {
               refresh_token: refreshToken,
             });
             if (!error) {
-              isRecovery = true;
               navigate('/reset-password', { replace: true });
               return;
             }
