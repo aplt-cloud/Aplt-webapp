@@ -195,7 +195,7 @@ const StepPhoto = ({ data, onUpdate, onNext }: any) => {
   );
 };
 
-const StepUsername = ({ data, onUpdate }: any) => {
+const StepUsername = ({ data, onUpdate, onAvailabilityChange }: any) => {
   const { t } = useTranslation();
   const { currentUser } = useAppSelector(state => state.auth);
   const [username, setUsername] = useState(data.username || '');
@@ -205,6 +205,7 @@ const StepUsername = ({ data, onUpdate }: any) => {
   useEffect(() => {
     if (username.length < 3) {
       setIsAvailable(null);
+      onAvailabilityChange(null);
       return;
     }
 
@@ -219,7 +220,9 @@ const StepUsername = ({ data, onUpdate }: any) => {
           .maybeSingle();
 
         if (error) throw error;
-        setIsAvailable(!existing);
+        const available = !existing;
+        setIsAvailable(available);
+        onAvailabilityChange(available);
       } catch (err) {
         console.error(err);
       } finally {
@@ -228,7 +231,7 @@ const StepUsername = ({ data, onUpdate }: any) => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [username, currentUser.user_id]);
+  }, [username, currentUser.user_id, onAvailabilityChange]);
 
   useEffect(() => {
     onUpdate({ username }, false); // Update state without persisting to DB yet
@@ -369,9 +372,11 @@ const ProfileSetupScreen: React.FC = () => {
 
   if (loading) return <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white text-sm">Loading...</div>;
 
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
+
   const isNextDisabled = () => {
     if (step === 1) return !formData.profile_photo_url;
-    if (step === 2) return !formData.username || formData.username.length < 3;
+    if (step === 2) return !formData.username || formData.username.length < 3 || isUsernameAvailable === false;
     if (step === 3) return !formData.display_name;
     return false;
   };
@@ -389,7 +394,7 @@ const ProfileSetupScreen: React.FC = () => {
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
             {step === 1 && <StepPhoto data={formData} onUpdate={updateFormData} onNext={nextStep} />}
-            {step === 2 && <StepUsername data={formData} onUpdate={updateFormData} />}
+            {step === 2 && <StepUsername data={formData} onUpdate={updateFormData} onAvailabilityChange={setIsUsernameAvailable} />}
             {step === 3 && <StepDisplayName data={formData} onUpdate={updateFormData} />}
             {step === 4 && <StepBio data={formData} onUpdate={updateFormData} onSkip={() => { updateFormData({ bio: '' }); nextStep(); }} />}
             {step > 4 && <div className="text-white">Steps 5-8 placeholder...</div>}
